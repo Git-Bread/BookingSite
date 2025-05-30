@@ -25,30 +25,25 @@ namespace BookingSite.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(string email, string password, string confirmPassword)
+        public async Task<IActionResult> Register(string email, string password)
         {
-            if (password != confirmPassword)
-            {
-                TempData["Error"] = "Passwords do not match";
-                return RedirectToAction("Index", "Home");
-            }
-
             var user = new ApplicationUser
             {
                 Email = email,
-                UserName = email,
+                UserName = email
             };
 
             var result = await _userManager.CreateAsync(user, password);
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                TempData["Success"] = "Registration successful!";
-                return RedirectToAction("Index", "Home");
+                return Json(new { success = true });
             }
 
-            TempData["Error"] = "Registration failed: " + string.Join(", ", result.Errors.Select(e => e.Description));
-            return RedirectToAction("Index", "Home");
+            return Json(new { 
+                success = false, 
+                message = string.Join(", ", result.Errors.Select(e => e.Description))
+            });
         }
 
         [HttpPost]
@@ -57,11 +52,13 @@ namespace BookingSite.Controllers
             var result = await _signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: false);
             if (result.Succeeded)
             {
-                return RedirectToAction("Index", "Home");
+                return Json(new { success = true });
             }
 
-            TempData["Error"] = "Invalid login attempt";
-            return RedirectToAction("Index", "Home");
+            return Json(new { 
+                success = false, 
+                message = "Invalid email or password"
+            });
         }
 
         [HttpPost]
