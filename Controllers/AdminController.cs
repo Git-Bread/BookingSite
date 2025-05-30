@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BookingSite.Models;
+using BookingSite.Models.ViewModels;
 using BookingSite.Data;
+using BookingSite.Services;
 
 namespace BookingSite.Controllers
 {
@@ -13,15 +15,18 @@ namespace BookingSite.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
+        private readonly RoomService _roomService;
 
         public AdminController(
-            UserManager<ApplicationUser> userManager, 
+            UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            RoomService roomService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
+            _roomService = roomService;
         }
 
         [AllowAnonymous]
@@ -74,6 +79,7 @@ namespace BookingSite.Controllers
         {
             var users = await _userManager.Users.ToListAsync();
             ViewData["CurrentUserId"] = _userManager.GetUserId(User);
+            ViewData["Rooms"] = await _roomService.GetAllRoomsWithTimeSlotsAsync();
             return View(users);
         }
 
@@ -151,6 +157,128 @@ namespace BookingSite.Controllers
             }
 
             return RedirectToAction(nameof(Dashboard));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateRoom([FromBody] RoomViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Ensure we have at least one open day
+            if (model.OpenDays == null || model.OpenDays.Length == 0)
+            {
+                model.OpenDays = new[] { 1, 2, 3, 4, 5 }; // Default to Mon-Fri
+            }
+
+            var room = new Room
+            {
+                Name = model.Name,
+                Location = model.Location,
+                OpenDays = string.Join(",", model.OpenDays)
+            };
+
+            await _roomService.CreateRoomAsync(room);
+            return Json(new { success = true, roomId = room.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateTimeSlot([FromForm] int timeSlotId, [FromForm] bool isEnabled)
+        {
+            try
+            {
+                var success = await _roomService.UpdateTimeSlotStatusAsync(timeSlotId, isEnabled);
+                return Json(new { success });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRoomTimeSlots(int roomId)
+        {
+            var room = await _context.Rooms
+                .Include(r => r.TimeSlots)
+                .FirstOrDefaultAsync(r => r.Id == roomId);
+
+            if (room == null)
+                return NotFound();
+
+            var viewModel = new TimeSlotManagementViewModel
+            {
+                RoomId = room.Id,
+                RoomName = room.Name,
+                TimeSlots = room.TimeSlots
+                    .OrderBy(ts => ts.StartTime)
+                    .Select(ts => new TimeSlotViewModel
+                    {
+                        Id = ts.Id,
+                        StartTime = ts.StartTime,
+                        EndTime = ts.EndTime,
+                        IsEnabled = ts.IsEnabled
+                    })
+                    .ToList()
+            };
+
+            return PartialView("_TimeSlotManagement", viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelBooking(int timeSlotId)
+        {
+            var booking = await _context.Bookings
+                .FirstOrDefaultAsync(b => b.TimeSlotId == timeSlotId && b.Date.Date == DateTime.Today);
+
+            if (booking == null)
+                return Json(new { success = false, message = "Booking not found" });
+
+            _context.Bookings.Remove(booking);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteRoom(int roomId)
+        {
+            try
+            {
+                var success = await _roomService.DeleteRoomAsync(roomId);
+                return Json(new { success });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateRoomDays(int roomId, [FromBody] int[] openDays)
+        {
+            try
+            {
+                var room = await _context.Rooms.FindAsync(roomId);
+                if (room == null)
+                    return Json(new { success = false, message = "Room not found" });
+
+                room.OpenDays = string.Join(",", openDays);
+                await _context.SaveChangesAsync();
+                
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
 } 

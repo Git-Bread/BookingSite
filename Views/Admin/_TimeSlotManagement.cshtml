@@ -1,0 +1,107 @@
+@using BookingSite.Models.ViewModels
+@model TimeSlotManagementViewModel
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Time Slots for @Model.RoomName</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var slot in Model.TimeSlots)
+                    {
+                        <tr>
+                            <td>@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</td>
+                            <td>
+                                <span class="badge @(slot.IsEnabled ? "bg-success" : "bg-secondary")">
+                                    @(slot.IsEnabled ? "Enabled" : "Disabled")
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm @(slot.IsEnabled ? "btn-outline-danger" : "btn-outline-success") toggle-timeslot"
+                                        data-timeslot-id="@slot.Id"
+                                        data-current-state="@slot.IsEnabled.ToString().ToLower()">
+                                    <i class="fas @(slot.IsEnabled ? "fa-ban" : "fa-check")"></i>
+                                    @(slot.IsEnabled ? "Disable" : "Enable")
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    document.querySelectorAll('.toggle-timeslot').forEach(button => {
+        button.addEventListener('click', async function() {
+            const timeSlotId = this.dataset.timeslotId;
+            const currentState = this.dataset.currentState === 'true';
+            const newState = !currentState;
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('timeSlotId', timeSlotId);
+            formData.append('isEnabled', newState);
+
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const response = await fetch('/Admin/UpdateTimeSlot', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Update result:', result); // Debug log
+
+                if (result.success) {
+                    // Update button appearance
+                    this.classList.toggle('btn-outline-success');
+                    this.classList.toggle('btn-outline-danger');
+                    this.dataset.currentState = newState.toString();
+                    
+                    // Update icon
+                    const icon = this.querySelector('i');
+                    icon.classList.toggle('fa-check');
+                    icon.classList.toggle('fa-ban');
+                    
+                    // Update button text
+                    const textNode = Array.from(this.childNodes)
+                        .find(node => node.nodeType === Node.TEXT_NODE);
+                    if (textNode) {
+                        textNode.textContent = newState ? ' Disable' : ' Enable';
+                    }
+
+                    // Update status badge
+                    const badge = this.closest('tr').querySelector('.badge');
+                    badge.classList.toggle('bg-success');
+                    badge.classList.toggle('bg-secondary');
+                    badge.textContent = newState ? 'Enabled' : 'Disabled';
+                } else {
+                    alert('Failed to update time slot: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating time slot:', error);
+                alert('Failed to update time slot. Please try again.');
+            }
+        });
+    });
+</script> 

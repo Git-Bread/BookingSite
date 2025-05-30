@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using BookingSite.Data;
 using BookingSite.Models;
+using BookingSite.Services;
 using dotenv.net;
+using BookingSite.Middleware;
 
 // Load environment variables from .env file
 DotEnv.Load();
@@ -29,6 +31,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Add RoomService to the service collection
+builder.Services.AddScoped<RoomService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -48,6 +53,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
+app.UseValidateAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
