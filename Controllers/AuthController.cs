@@ -1,16 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using BookingSite.Models;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.AspNetCore.Authentication;
 
 namespace BookingSite.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class AuthController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -29,19 +24,63 @@ namespace BookingSite.Controllers
             _configuration = configuration;
         }
 
-        [HttpPost("setup-admin")]
-        public async Task<ActionResult<AuthResponse>> SetupAdmin()
+        [HttpPost]
+        public async Task<IActionResult> Register(string email, string password, string confirmPassword)
+        {
+            if (password != confirmPassword)
+            {
+                TempData["Error"] = "Passwords do not match";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var user = new ApplicationUser
+            {
+                Email = email,
+                UserName = email,
+            };
+
+            var result = await _userManager.CreateAsync(user, password);
+            if (result.Succeeded)
+            {
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                TempData["Success"] = "Registration successful!";
+                return RedirectToAction("Index", "Home");
+            }
+
+            TempData["Error"] = "Registration failed: " + string.Join(", ", result.Errors.Select(e => e.Description));
+            return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login(string email, string password)
+        {
+            var result = await _signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: false);
+            if (result.Succeeded)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            TempData["Error"] = "Invalid login attempt";
+            return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SetupAdmin()
         {
             var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
             var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
             if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
             {
-                return BadRequest(new AuthResponse
-                {
-                    Success = false,
-                    Message = "Admin credentials not found in environment variables"
-                });
+                TempData["Error"] = "Admin credentials not found in environment variables";
+                return RedirectToAction("Index", "Home");
             }
 
             // Check if the admin role exists
@@ -51,11 +90,8 @@ namespace BookingSite.Controllers
                 var roleResult = await _roleManager.CreateAsync(new IdentityRole("Admin"));
                 if (!roleResult.Succeeded)
                 {
-                    return BadRequest(new AuthResponse
-                    {
-                        Success = false,
-                        Message = "Failed to create Admin role"
-                    });
+                    TempData["Error"] = "Failed to create Admin role";
+                    return RedirectToAction("Index", "Home");
                 }
             }
 
@@ -75,36 +111,24 @@ namespace BookingSite.Controllers
                 var createResult = await _userManager.CreateAsync(adminUser, adminPassword);
                 if (!createResult.Succeeded)
                 {
-                    return BadRequest(new AuthResponse
-                    {
-                        Success = false,
-                        Message = "Failed to create admin user: " + string.Join(", ", createResult.Errors.Select(e => e.Description))
-                    });
+                    TempData["Error"] = "Failed to create admin user: " + string.Join(", ", createResult.Errors.Select(e => e.Description));
+                    return RedirectToAction("Index", "Home");
                 }
 
                 // Add the user to the Admin role
                 var roleResult = await _userManager.AddToRoleAsync(adminUser, "Admin");
                 if (!roleResult.Succeeded)
                 {
-                    return BadRequest(new AuthResponse
-                    {
-                        Success = false,
-                        Message = "Failed to add user to Admin role"
-                    });
+                    TempData["Error"] = "Failed to add user to Admin role";
+                    return RedirectToAction("Index", "Home");
                 }
 
-                return Ok(new AuthResponse
-                {
-                    Success = true,
-                    Message = "Admin user and role created successfully"
-                });
+                TempData["Success"] = "Admin user and role created successfully";
+                return RedirectToAction("Index", "Home");
             }
 
-            return Ok(new AuthResponse
-            {
-                Success = true,
-                Message = "Admin user already exists"
-            });
+            TempData["Success"] = "Admin user already exists";
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpPost("register")]
@@ -127,63 +151,6 @@ namespace BookingSite.Controllers
                 Success = false,
                 Message = string.Join(", ", result.Errors.Select(x => x.Description))
             });
-        }
-
-        [HttpPost("login")]
-        public async Task<ActionResult<AuthResponse>> Login(LoginRequest model)
-        {
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
-
-            if (result.Succeeded)
-            {
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user == null)
-                {
-                    return Unauthorized(new AuthResponse
-                    {
-                        Success = false,
-                        Message = "User not found"
-                    });
-                }
-
-                var token = GenerateJwtToken(user);
-
-                return new AuthResponse
-                {
-                    Success = true,
-                    Token = token,
-                    Message = "Login successful"
-                };
-            }
-
-            return Unauthorized(new AuthResponse
-            {
-                Success = false,
-                Message = "Invalid login attempt"
-            });
-        }
-
-        private string GenerateJwtToken(ApplicationUser user)
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email ?? string.Empty),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id)
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"] ?? "YourSuperSecretKey12345678901234567890"));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["JWT:ValidIssuer"] ?? "https://localhost:5001",
-                audience: _configuration["JWT:ValidAudience"] ?? "https://localhost:5001",
-                claims: claims,
-                expires: DateTime.Now.AddDays(1),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 } 
