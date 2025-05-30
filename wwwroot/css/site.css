@@ -20,3 +20,47 @@ html {
 body {
   font-family: 'Montserrat', sans-serif;
 }
+
+.nav-link {
+  position: relative;
+  transition: color 0.2s ease-in-out;
+  padding-left: 1em !important; 
+  padding-right: 1em !important;
+}
+
+.nav-link:hover {
+  color: #0d6efd !important;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: #0d6efd;
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.2s ease-in-out;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+.nav-link.active {
+  color: #0d6efd !important;
+}
+
+@media (max-width: 575.98px) {
+  .navbar-nav {
+      border-top: 1px solid #dee2e6;
+      padding-top: 0.5rem;
+  }
+  .nav-item {
+      padding: 0.25rem 0;
+  }
+}
