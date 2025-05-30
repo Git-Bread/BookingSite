@@ -68,6 +68,7 @@ namespace BookingSite.Controllers
                 adminUser = new ApplicationUser
                 {
                     Email = adminEmail,
+                    UserName = adminEmail,
                     EmailConfirmed = true
                 };
 
@@ -136,6 +137,15 @@ namespace BookingSite.Controllers
             if (result.Succeeded)
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    return Unauthorized(new AuthResponse
+                    {
+                        Success = false,
+                        Message = "User not found"
+                    });
+                }
+
                 var token = GenerateJwtToken(user);
 
                 return new AuthResponse
@@ -157,7 +167,7 @@ namespace BookingSite.Controllers
         {
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id)
             };
