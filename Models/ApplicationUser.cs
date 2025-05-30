@@ -4,6 +4,6 @@ namespace BookingSite.Models
 {
     public class ApplicationUser : IdentityUser
     {
-        // Empty for now, but can be extended later if needed
+        // Add any additional user properties here
     }
 } 

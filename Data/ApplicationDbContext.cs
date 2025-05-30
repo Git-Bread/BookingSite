@@ -10,5 +10,7 @@ namespace BookingSite.Data
             : base(options)
         {
         }
+
+        // Add DbSet properties for other entities here
     }
 } 
