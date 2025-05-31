@@ -19,31 +19,38 @@ namespace BookingSite.Data
         {
             base.OnModelCreating(builder);
 
-            // Configure Room-TimeSlot relationship
-            builder.Entity<TimeSlot>()
-                .HasOne(t => t.Room)
-                .WithMany(r => r.TimeSlots)
-                .HasForeignKey(t => t.RoomId)
+            // Configure Room
+            builder.Entity<Room>()
+                .HasMany(r => r.TimeSlots)
+                .WithOne(ts => ts.Room)
+                .HasForeignKey(ts => ts.RoomId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Configure Booking relationships
+            // Configure TimeSlot
+            builder.Entity<TimeSlot>()
+                .HasOne(ts => ts.BookedByUser)
+                .WithMany()
+                .HasForeignKey(ts => ts.BookedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configure Booking
             builder.Entity<Booking>()
                 .HasOne(b => b.Room)
                 .WithMany()
                 .HasForeignKey(b => b.RoomId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Booking>()
                 .HasOne(b => b.TimeSlot)
                 .WithMany()
                 .HasForeignKey(b => b.TimeSlotId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Booking>()
                 .HasOne(b => b.User)
                 .WithMany()
                 .HasForeignKey(b => b.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Add unique constraint to prevent double bookings
             builder.Entity<Booking>()

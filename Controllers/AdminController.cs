@@ -80,6 +80,17 @@ namespace BookingSite.Controllers
             var users = await _userManager.Users.ToListAsync();
             ViewData["CurrentUserId"] = _userManager.GetUserId(User);
             ViewData["Rooms"] = await _roomService.GetAllRoomsWithTimeSlotsAsync();
+            
+            // Get all bookings with related data
+            var bookings = await _context.Bookings
+                .Include(b => b.Room)
+                .Include(b => b.TimeSlot)
+                .Include(b => b.User)
+                .OrderByDescending(b => b.Date)
+                .ToListAsync();
+            
+            ViewData["Bookings"] = bookings;
+            
             return View(users);
         }
 
@@ -231,18 +242,34 @@ namespace BookingSite.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CancelBooking(int timeSlotId)
+        public async Task<IActionResult> CancelBooking([FromBody] CancelBookingViewModel model)
         {
-            var booking = await _context.Bookings
-                .FirstOrDefaultAsync(b => b.TimeSlotId == timeSlotId && b.Date.Date == DateTime.Today);
+            try
+            {
+                var booking = await _context.Bookings
+                    .Include(b => b.TimeSlot)
+                    .FirstOrDefaultAsync(b => b.Id == model.Id);
 
-            if (booking == null)
-                return Json(new { success = false, message = "Booking not found" });
+                if (booking == null)
+                {
+                    return Json(new { success = false, message = "Booking not found." });
+                }
 
-            _context.Bookings.Remove(booking);
-            await _context.SaveChangesAsync();
+                // Mark the time slot as available
+                booking.TimeSlot.IsOccupied = false;
+                booking.TimeSlot.BookedByUserId = null;
+                booking.TimeSlot.BookedAt = null;
 
-            return Json(new { success = true });
+                // Remove the booking
+                _context.Bookings.Remove(booking);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]

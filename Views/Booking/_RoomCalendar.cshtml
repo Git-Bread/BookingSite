@@ -1,0 +1,76 @@
+@model BookingSite.Models.ViewModels.BookingCalendarViewModel
+
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            @foreach (var room in Model.Rooms)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">@room.Name</h5>
+                            <small class="text-muted">@room.Location</small>
+                        </div>
+                        <div class="card-body">
+                            @{
+                                var isOpenOnDay = room.OpenDays.Split(',').Select(int.Parse).Contains(
+                                    Model.SelectedDate.DayOfWeek switch
+                                    {
+                                        DayOfWeek.Sunday => 7,
+                                        DayOfWeek.Monday => 1,
+                                        DayOfWeek.Tuesday => 2,
+                                        DayOfWeek.Wednesday => 3,
+                                        DayOfWeek.Thursday => 4,
+                                        DayOfWeek.Friday => 5,
+                                        DayOfWeek.Saturday => 6,
+                                        _ => 0
+                                    }
+                                );
+                            }
+                            @if (Model.RoomTimeSlots.TryGetValue(room.Id, out var timeSlots) && timeSlots.Any())
+                            {
+                                <div class="time-slots">
+                                    @foreach (var slot in timeSlots)
+                                    {
+                                        <div class="time-slot mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</span>
+                                                @if (!slot.IsOccupied && slot.IsEnabled)
+                                                {
+                                                    <button class="btn btn-primary btn-sm book-slot" 
+                                                            data-room-id="@room.Id"
+                                                            data-slot-id="@slot.Id"
+                                                            data-date="@Model.SelectedDate.ToString("yyyy-MM-dd")">
+                                                        Book
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">@(slot.IsOccupied ? "Booked" : "Unavailable")</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    @if (isOpenOnDay)
+                                    {
+                                        <span>Closed for the day</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Not open on @Model.SelectedDate.DayOfWeek</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div> 

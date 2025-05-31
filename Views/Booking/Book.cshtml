@@ -1,8 +1,81 @@
+@model BookingSite.Models.ViewModels.BookingCalendarViewModel
 @{
     ViewData["Title"] = "Book a Room";
 }
- 
-<div class="container">
-    <h1>Book a Room</h1>
-    <p>Room booking functionality will be implemented here.</p>
-</div> 
+
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">Book a Room</h1>
+            <p class="lead">Select a date and time to book your meeting room.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Select Date</h5>
+                    <input type="date" class="form-control" id="bookingDate" 
+                           value="@Model.SelectedDate.ToString("yyyy-MM-dd")" 
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Legend</h5>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-primary me-2">Available</span>
+                        <small>Time slot is available for booking</small>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-secondary me-2">Booked</span>
+                        <small>Time slot is already booked</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-light text-dark me-2">Unavailable</span>
+                        <small>Time slot is not available</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <partial name="_RoomCalendar" model="Model" />
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle date change
+            $('#bookingDate').change(function() {
+                window.location.href = '/Booking/Book?date=' + $(this).val();
+            });
+
+            // Handle booking
+            $('.book-slot').click(function() {
+                const roomId = $(this).data('room-id');
+                const slotId = $(this).data('slot-id');
+                const date = $(this).data('date');
+
+                // Show confirmation modal
+                if (confirm('Are you sure you want to book this time slot?')) {
+                    $.post('/Booking/Create', {
+                        roomId: roomId,
+                        timeSlotId: slotId,
+                        date: date
+                    })
+                    .done(function() {
+                        window.location.reload();
+                    })
+                    .fail(function(error) {
+                        alert('Failed to book the time slot. Please try again.');
+                    });
+                }
+            });
+        });
+    </script>
+} 

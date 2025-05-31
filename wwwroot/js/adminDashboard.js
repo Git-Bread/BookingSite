@@ -200,4 +200,96 @@ document.getElementById('saveRoomDays')?.addEventListener('click', async functio
         console.error('Error updating room days:', error);
         alert('Failed to update room days. Please try again.');
     }
+});
+
+// Booking management functionality
+function initializeBookingManagement() {
+    const bookingsTable = document.getElementById('bookingsTable');
+    if (!bookingsTable) return;
+
+    const bookingSearch = document.getElementById('bookingSearch');
+    const dateFilter = document.getElementById('dateFilter');
+    const clearSearch = document.getElementById('clearSearch');
+    const clearDate = document.getElementById('clearDate');
+
+    function filterBookings() {
+        const searchTerm = bookingSearch.value.toLowerCase();
+        const selectedDate = dateFilter.value;
+        const rows = bookingsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        for (let row of rows) {
+            const roomName = row.cells[0].textContent.toLowerCase();
+            const userEmail = row.cells[1].textContent.toLowerCase();
+            const date = row.cells[2].textContent;
+            const time = row.cells[3].textContent;
+            const bookedOn = row.cells[4].textContent;
+
+            const matchesSearch = roomName.includes(searchTerm) || 
+                                userEmail.includes(searchTerm) || 
+                                date.toLowerCase().includes(searchTerm) || 
+                                time.toLowerCase().includes(searchTerm) ||
+                                bookedOn.toLowerCase().includes(searchTerm);
+
+            const matchesDate = !selectedDate || date.includes(selectedDate);
+
+            row.style.display = matchesSearch && matchesDate ? '' : 'none';
+        }
+    }
+
+    bookingSearch?.addEventListener('input', filterBookings);
+    dateFilter?.addEventListener('change', filterBookings);
+    clearSearch?.addEventListener('click', () => {
+        bookingSearch.value = '';
+        filterBookings();
+    });
+    clearDate?.addEventListener('click', () => {
+        dateFilter.value = '';
+        filterBookings();
+    });
+
+    // Cancel booking functionality
+    let currentBookingId = null;
+    const cancelModal = new bootstrap.Modal(document.getElementById('cancelBookingModal'));
+
+    document.querySelectorAll('.cancel-booking').forEach(button => {
+        button.addEventListener('click', function() {
+            currentBookingId = this.dataset.bookingId;
+            document.getElementById('cancelRoomName').textContent = this.dataset.roomName;
+            document.getElementById('cancelUserEmail').textContent = this.dataset.userEmail;
+            document.getElementById('cancelDate').textContent = this.dataset.date;
+            document.getElementById('cancelTime').textContent = this.dataset.time;
+            cancelModal.show();
+        });
+    });
+
+    document.getElementById('confirmCancel')?.addEventListener('click', async function() {
+        if (!currentBookingId) return;
+
+        try {
+            const response = await fetch('/Admin/CancelBooking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ id: currentBookingId })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Failed to cancel booking: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error canceling booking:', error);
+            alert('Failed to cancel booking. Please try again.');
+        }
+    });
+}
+
+// Initialize all functionality when the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    attachTimeSlotHandlers();
+    initializeBookingManagement();
 }); 

@@ -15,10 +15,25 @@ namespace BookingSite.Services
 
         public async Task<List<Room>> GetAllRoomsWithTimeSlotsAsync()
         {
-            return await _context.Rooms
+            var rooms = await _context.Rooms
                 .Include(r => r.TimeSlots)
                 .OrderBy(r => r.Name)
                 .ToListAsync();
+
+            var now = DateTime.Now;
+            var today = now.Date;
+
+            foreach (var room in rooms)
+            {
+                // Filter out past time slots
+                room.TimeSlots = room.TimeSlots
+                    .Where(ts => 
+                        // For today, only show future time slots
+                        (ts.StartTime.ToTimeSpan() > now.TimeOfDay))
+                    .ToList();
+            }
+
+            return rooms;
         }
 
         public async Task<Room> CreateRoomAsync(Room room)
@@ -87,13 +102,19 @@ namespace BookingSite.Services
                 return false;
 
             // Check if the room is open on this day
-            var dayOfWeek = ((int)date.DayOfWeek + 1) % 7 + 1; // Convert to 1-7 format
+            var dayOfWeek = MapDayOfWeek(date.DayOfWeek);
             if (!room.OpenDays.Split(',').Select(int.Parse).Contains(dayOfWeek))
                 return false;
 
             // Check if the time slot exists and is enabled
             var timeSlot = room.TimeSlots.FirstOrDefault(ts => ts.Id == timeSlotId);
             if (timeSlot == null || !timeSlot.IsEnabled)
+                return false;
+
+            // Check if the booking time has already passed
+            var now = DateTime.Now;
+            var bookingTime = date.Date.Add(timeSlot.StartTime.ToTimeSpan());
+            if (bookingTime <= now)
                 return false;
 
             // Check if there's no existing booking for this room, date, and time slot
@@ -116,8 +137,14 @@ namespace BookingSite.Services
             if (timeSlot == null || !timeSlot.IsEnabled) return false;
 
             // Check if the room is open on this day
-            var dayOfWeek = ((int)date.DayOfWeek + 6) % 7 + 1; // Convert to 1-7 (Monday-Sunday)
+            var dayOfWeek = MapDayOfWeek(date.DayOfWeek);
             if (!room.OpenDays.Split(',').Select(int.Parse).Contains(dayOfWeek))
+                return false;
+
+            // Check if the booking time has already passed
+            var now = DateTime.Now;
+            var bookingTime = date.Date.Add(timeSlot.StartTime.ToTimeSpan());
+            if (bookingTime <= now)
                 return false;
 
             // Check for existing booking
@@ -163,6 +190,36 @@ namespace BookingSite.Services
                 .OrderBy(b => b.Date)
                 .ThenBy(b => b.TimeSlot.StartTime)
                 .ToListAsync();
+        }
+
+        private int MapDayOfWeek(DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Sunday => 7,
+                DayOfWeek.Monday => 1,
+                DayOfWeek.Tuesday => 2,
+                DayOfWeek.Wednesday => 3,
+                DayOfWeek.Thursday => 4,
+                DayOfWeek.Friday => 5,
+                DayOfWeek.Saturday => 6,
+                _ => throw new ArgumentException($"Unexpected day of week: {dayOfWeek}")
+            };
+        }
+
+        private string GetDayName(int dayNumber)
+        {
+            return dayNumber switch
+            {
+                1 => "Monday",
+                2 => "Tuesday",
+                3 => "Wednesday",
+                4 => "Thursday",
+                5 => "Friday",
+                6 => "Saturday",
+                7 => "Sunday",
+                _ => throw new ArgumentException($"Invalid day number: {dayNumber}")
+            };
         }
     }
 } 

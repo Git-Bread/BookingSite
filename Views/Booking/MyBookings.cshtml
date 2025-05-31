@@ -1,8 +1,119 @@
+@model List<Booking>
 @{
     ViewData["Title"] = "My Bookings";
 }
 
-<div class="container">
-    <h1>My Bookings</h1>
-    <p>Your booking history will be displayed here.</p>
-</div> 
+<div class="container py-4">
+    <h1 class="mb-4">My Bookings</h1>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            You don't have any bookings yet. <a asp-action="Book" class="alert-link">Book a room</a> to get started.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var booking in Model.OrderByDescending(b => b.Date))
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@booking.Room.Name</h5>
+                            <div class="card-text">
+                                <p class="mb-1">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    @booking.Date.ToString("dddd, MMMM d, yyyy")
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-clock me-2"></i>
+                                    @booking.TimeSlot.StartTime.ToString("HH:mm") - @booking.TimeSlot.EndTime.ToString("HH:mm")
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    @booking.Room.Location
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-calendar-plus me-2"></i>
+                                    Booked on @booking.BookedAt.ToString("g")
+                                </p>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <button class="btn btn-danger cancel-booking" 
+                                    data-booking-id="@booking.Id"
+                                    data-room-name="@booking.Room.Name"
+                                    data-date="@booking.Date.ToString("g")"
+                                    data-time="@($"{booking.TimeSlot.StartTime:HH:mm} - {booking.TimeSlot.EndTime:HH:mm}")">
+                                <i class="fas fa-times me-2"></i>Cancel Booking
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Cancel Booking Modal -->
+<div class="modal fade" id="cancelBookingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel your booking for:</p>
+                <p class="mb-1"><strong>Room:</strong> <span id="cancelRoomName"></span></p>
+                <p class="mb-1"><strong>Date:</strong> <span id="cancelDate"></span></p>
+                <p class="mb-1"><strong>Time:</strong> <span id="cancelTime"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Booking</button>
+                <button type="button" class="btn btn-danger" id="confirmCancel">Yes, Cancel Booking</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentBookingId = null;
+        const cancelModal = new bootstrap.Modal(document.getElementById('cancelBookingModal'));
+
+        document.querySelectorAll('.cancel-booking').forEach(button => {
+            button.addEventListener('click', function() {
+                currentBookingId = this.dataset.bookingId;
+                document.getElementById('cancelRoomName').textContent = this.dataset.roomName;
+                document.getElementById('cancelDate').textContent = this.dataset.date;
+                document.getElementById('cancelTime').textContent = this.dataset.time;
+                cancelModal.show();
+            });
+        });
+
+        document.getElementById('confirmCancel').addEventListener('click', async function() {
+            if (!currentBookingId) return;
+
+            try {
+                const response = await fetch(`/Booking/Cancel/${currentBookingId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Failed to cancel booking: ' + error);
+                }
+            } catch (error) {
+                console.error('Error canceling booking:', error);
+                alert('Failed to cancel booking. Please try again.');
+            }
+        });
+    </script>
+} 
