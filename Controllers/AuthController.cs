@@ -37,7 +37,7 @@ namespace BookingSite.Controllers
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                return Json(new { success = true });
+                return Json(new { success = true, redirectUrl = Url.Action("Index", "Home") });
             }
 
             return Json(new { 
@@ -126,28 +126,6 @@ namespace BookingSite.Controllers
 
             TempData["Success"] = "Admin user already exists";
             return RedirectToAction("Index", "Home");
-        }
-
-        [HttpPost("register")]
-        public async Task<ActionResult<AuthResponse>> Register(RegisterRequest model)
-        {
-            var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-            var result = await _userManager.CreateAsync(user, model.Password);
-
-            if (result.Succeeded)
-            {
-                return new AuthResponse
-                {
-                    Success = true,
-                    Message = "Registration successful"
-                };
-            }
-
-            return BadRequest(new AuthResponse
-            {
-                Success = false,
-                Message = string.Join(", ", result.Errors.Select(x => x.Description))
-            });
         }
     }
 } 

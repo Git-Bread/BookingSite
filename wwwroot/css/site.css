@@ -59,6 +59,10 @@ main {
   color: #0d6efd !important;
 }
 
+.card-header .btn-group  {
+  gap: 0.4em;
+}
+
 @media (max-width: 575.98px) {
   .navbar-nav {
       border-top: 1px solid #dee2e6;

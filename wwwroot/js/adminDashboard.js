@@ -187,7 +187,7 @@ document.getElementById('saveRoomDays')?.addEventListener('click', async functio
                 'Content-Type': 'application/json',
                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
             },
-            body: JSON.stringify(openDays)
+            body: JSON.stringify({ roomId: currentEditRoomId, openDays: openDays })
         });
 
         const result = await response.json();

@@ -262,23 +262,23 @@ namespace BookingSite.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateRoomDays(int roomId, [FromBody] int[] openDays)
+        public async Task<IActionResult> UpdateRoomDays([FromBody] UpdateRoomDaysViewModel model)
         {
-            try
+            if (model == null || model.OpenDays == null || !model.OpenDays.Any())
             {
-                var room = await _context.Rooms.FindAsync(roomId);
-                if (room == null)
-                    return Json(new { success = false, message = "Room not found" });
+                return Json(new { success = false, message = "No open days provided." });
+            }
 
-                room.OpenDays = string.Join(",", openDays);
-                await _context.SaveChangesAsync();
-                
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
+            var room = await _context.Rooms.FindAsync(model.RoomId);
+            if (room == null)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Room not found" });
             }
+
+            room.OpenDays = string.Join(",", model.OpenDays.OrderBy(d => d));
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
         }
     }
 } 
