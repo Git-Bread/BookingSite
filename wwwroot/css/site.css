@@ -23,6 +23,7 @@ body {
 
 main {
   margin-top: 30px;
+  min-height: 90vh;
 }
 
 .nav-link {
