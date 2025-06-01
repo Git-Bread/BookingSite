@@ -6,6 +6,7 @@ using BookingSite.Models;
 using BookingSite.Services;
 using dotenv.net;
 using BookingSite.Middleware;
+using Microsoft.OpenApi.Models;
 
 // Load environment variables from .env file
 DotEnv.Load();
@@ -15,6 +16,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+// Add API Controllers
+builder.Services.AddControllers();
+
+// Add Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Booking Site API", Version = "v1" });
+});
 
 // Add DbContext with SQLite
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -44,6 +55,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+    // Enable Swagger UI
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Booking Site API V1");
+    });
 }
 else
 {
@@ -64,5 +81,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+
+// Map API endpoints
+app.MapControllers();
 
 app.Run(); 

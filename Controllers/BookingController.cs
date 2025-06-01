@@ -27,16 +27,16 @@ namespace BookingSite.Controllers
 
         private int MapDayOfWeek(DayOfWeek dayOfWeek)
         {
-            // Map C# DayOfWeek to our OpenDays format
+            // Map C# DayOfWeek to OpenDays format
             return dayOfWeek switch
             {
-                DayOfWeek.Sunday => 1,    // Sunday is 1
-                DayOfWeek.Monday => 2,    // Monday is 2
-                DayOfWeek.Tuesday => 3,   // Tuesday is 3
-                DayOfWeek.Wednesday => 4, // Wednesday is 4
-                DayOfWeek.Thursday => 5,  // Thursday is 5
-                DayOfWeek.Friday => 6,    // Friday is 6
-                DayOfWeek.Saturday => 7,  // Saturday is 7
+                DayOfWeek.Sunday => 1,   
+                DayOfWeek.Monday => 2,    
+                DayOfWeek.Tuesday => 3,   
+                DayOfWeek.Wednesday => 4,
+                DayOfWeek.Thursday => 5, 
+                DayOfWeek.Friday => 6,   
+                DayOfWeek.Saturday => 7,  
                 _ => throw new ArgumentException("Invalid day of week")
             };
         }

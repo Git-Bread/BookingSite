@@ -179,7 +179,7 @@ namespace BookingSite.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Ensure we have at least one open day
+            // Ensure at least one open day
             if (model.OpenDays == null || model.OpenDays.Length == 0)
             {
                 model.OpenDays = new[] { 1, 2, 3, 4, 5 }; // Default to Mon-Fri
