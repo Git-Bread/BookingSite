@@ -38,7 +38,7 @@ function attachTimeSlotHandlers() {
                     icon.className = `fas ${newState ? 'fa-ban' : 'fa-check'}`;
                     this.appendChild(icon);
                     
-                    // Add space and text
+                    // text
                     this.appendChild(document.createTextNode(` ${newState ? 'Disable' : 'Enable'}`));
 
                     // Update status badge
@@ -103,7 +103,7 @@ document.querySelectorAll('.manage-timeslots').forEach(button => {
             container.innerHTML = html;
             container.scrollIntoView({ behavior: 'smooth' });
             
-            // Attach event handlers to the newly loaded time slot buttons
+            // Attach event handlers to the new loaded time slot buttons
             attachTimeSlotHandlers();
         } catch (error) {
             console.error('Error loading time slots:', error);

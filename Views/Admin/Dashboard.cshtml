@@ -24,6 +24,55 @@
     }
 }
 
+@section Styles {
+    <style>
+        .btn-group {
+            flex-wrap: wrap;
+            gap: 1px; /* Add small gap between buttons when wrapped */
+        }
+
+        .btn-group .btn {
+            border-radius: 4px !important; /* Override Bootstrap's radius removal */
+            margin: -1px; /* Compensate for double borders */
+        }
+
+        .btn-group .btn-outline-primary {
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .room-card {
+            transition: all 0.3s ease;
+        }
+
+        .room-card.selected {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        /* Day picker specific styles */
+        .day-picker-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            width: 100%;
+        }
+
+        .day-picker-group .btn {
+            flex: 1 1 calc(14.28% - 2px); /* 7 days with gap */
+            min-width: fit-content;
+        }
+
+        /* Remove calendar icon from date input */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            display: none;
+        }
+        input[type="date"] {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+    </style>
+}
+
 <div class="container mt-4">
     <h2 class="mb-4">Admin Dashboard</h2>
 
@@ -343,53 +392,6 @@
         </div>
     </div>
 </div>
-
-<style>
-    .btn-group {
-        flex-wrap: wrap;
-        gap: 1px; /* Add small gap between buttons when wrapped */
-    }
-
-    .btn-group .btn {
-        border-radius: 4px !important; /* Override Bootstrap's radius removal */
-        margin: -1px; /* Compensate for double borders */
-    }
-
-    .btn-group .btn-outline-primary {
-        transition: background-color 0.15s ease-in-out;
-    }
-
-    .room-card {
-        transition: all 0.3s ease;
-    }
-
-    .room-card.selected {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-
-    /* Day picker specific styles */
-    .day-picker-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2px;
-        width: 100%;
-    }
-
-    .day-picker-group .btn {
-        flex: 1 1 calc(14.28% - 2px); /* 7 days with gap */
-        min-width: fit-content;
-    }
-
-    /* Remove calendar icon from date input */
-    input[type="date"]::-webkit-calendar-picker-indicator {
-        display: none;
-    }
-    input[type="date"] {
-        -webkit-appearance: none;
-        appearance: none;
-    }
-</style>
 
 @section Scripts {
     <script src="~/js/adminDashboard.js"></script>
