@@ -23,12 +23,4 @@ namespace BookingSite.Models.ViewModels
         public string RoomName { get; set; } = string.Empty;
         public List<TimeSlotViewModel> TimeSlots { get; set; } = new();
     }
-
-    public class TimeSlotViewModel
-    {
-        public int Id { get; set; }
-        public TimeOnly StartTime { get; set; }
-        public TimeOnly EndTime { get; set; }
-        public bool IsEnabled { get; set; }
-    }
 } 

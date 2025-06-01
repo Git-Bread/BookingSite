@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
 using BookingSite.Data;
 using BookingSite.Models;
 using BookingSite.Services;
@@ -33,6 +34,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
 
 // Add RoomService to the service collection
 builder.Services.AddScoped<RoomService>();
+
+// Add the booking cleanup service
+builder.Services.AddHostedService<BookingCleanupService>();
 
 var app = builder.Build();
 

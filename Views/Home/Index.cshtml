@@ -1,4 +1,7 @@
-﻿@{
+﻿@using BookingSite.Models.ViewModels
+@model List<PublicRoomViewModel>
+
+@{
     ViewData["Title"] = "Home";
 }
 
@@ -46,3 +49,5 @@
         </div>
     </div>
 </div>
+
+<partial name="_PublicRooms" model="Model" />
