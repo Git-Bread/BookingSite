@@ -17,7 +17,7 @@ A modern web application for managing room bookings, built with ASP.NET Core MVC
 - Booking oversight and management
 - Dashboard with minor system statistics
 
-## Technical Stack
+## Tech stack
 
 - **Backend**: ASP.NET Core MVC
 - **Database**: SQLite
@@ -28,10 +28,9 @@ A modern web application for managing room bookings, built with ASP.NET Core MVC
   - jQuery
 - **API**: RESTful API with Swagger/OpenAPI support
 
-## Prerequisites
+## Requires
 
 - .NET 8.0 SDK or later
-- Visual Studio 2022 or Visual Studio Code
 - SQLite (included with .NET)
 
 ## Installation
@@ -160,46 +159,3 @@ Theres no innate security for these as the website security wasent important.
 - `PUT /api/Bookings/{id}` - Update booking
 - `DELETE /api/Bookings/{id}` - Delete booking
 
-## Development
-
-### Database Migrations
-To create a new migration:
-```bash
-dotnet ef migrations add [MigrationName]
-```
-
-To update the database:
-```bash
-dotnet ef database update
-```
-
-### Running Tests
-```bash
-dotnet test
-```
-
-## Security
-
-- Authentication using ASP.NET Core Identity
-- Role-based authorization (Admin/User)
-- CSRF protection
-- Input validation
-- Secure password hashing
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Bootstrap for the UI framework
-- Font Awesome for icons
-- ASP.NET Core team for the framework 
