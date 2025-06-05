@@ -31,7 +31,7 @@ namespace BookingSite.Services
                 // Filter out past time slots
                 room.TimeSlots = room.TimeSlots
                     .Where(ts => 
-                        // For today, only show future time slots
+                        // only show future time slots
                         (ts.StartTime.ToTimeSpan() > now.TimeOfDay))
                     .ToList();
             }
@@ -49,7 +49,7 @@ namespace BookingSite.Services
                 {
                     StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(hour)),
                     EndTime = TimeOnly.FromTimeSpan(TimeSpan.FromHours(hour + 1)),
-                    IsEnabled = false, // Set to disabled by default
+                    IsEnabled = false, // timeslot disabled by default
                     Room = room
                 });
             }
@@ -104,23 +104,24 @@ namespace BookingSite.Services
             if (room == null)
                 return false;
 
-            // Check if the room is open on this day
+            //checks
+            // room is open
             var dayOfWeek = _dayMappingService.MapDayOfWeek(date.DayOfWeek);
             if (!room.OpenDays.Split(',').Select(int.Parse).Contains(dayOfWeek))
                 return false;
 
-            // Check if the time slot exists and is enabled
+            // time slot is enabled
             var timeSlot = room.TimeSlots.FirstOrDefault(ts => ts.Id == timeSlotId);
             if (timeSlot == null || !timeSlot.IsEnabled)
                 return false;
 
-            // Check if the booking time has already passed
+            // booking time is valid
             var now = DateTime.Now;
             var bookingTime = date.Date.Add(timeSlot.StartTime.ToTimeSpan());
             if (bookingTime <= now)
                 return false;
 
-            // Check if there's no existing booking for this room, date, and time slot
+            // Make sure theres no duplicate or overlapping bookings
             var existingBooking = await _context.Bookings
                 .AnyAsync(b => b.RoomId == roomId && b.Date.Date == date.Date && b.TimeSlotId == timeSlotId);
 
@@ -129,7 +130,7 @@ namespace BookingSite.Services
 
         public async Task<bool> CreateBookingAsync(int roomId, int timeSlotId, string userId, DateTime date)
         {
-            // Check if the time slot is enabled and the room is open on that day
+            // check if the time slot is enabled and the room is open on that day
             var room = await _context.Rooms
                 .Include(r => r.TimeSlots)
                 .FirstOrDefaultAsync(r => r.Id == roomId);
@@ -139,12 +140,12 @@ namespace BookingSite.Services
             var timeSlot = room.TimeSlots.FirstOrDefault(t => t.Id == timeSlotId);
             if (timeSlot == null || !timeSlot.IsEnabled) return false;
 
-            // Check if the room is open on this day
+            // controll that the room is open on this day
             var dayOfWeek = _dayMappingService.MapDayOfWeek(date.DayOfWeek);
             if (!room.OpenDays.Split(',').Select(int.Parse).Contains(dayOfWeek))
                 return false;
 
-            // Check if the booking time has already passed
+            // make sure its not expired
             var now = DateTime.Now;
             var bookingTime = date.Date.Add(timeSlot.StartTime.ToTimeSpan());
             if (bookingTime <= now)
@@ -193,12 +194,6 @@ namespace BookingSite.Services
                 .OrderBy(b => b.Date)
                 .ThenBy(b => b.TimeSlot.StartTime)
                 .ToListAsync();
-        }
-
-        public async Task<TimeSlotManagementViewModel> GetTimeSlotManagementViewModelAsync(int roomId)
-        {
-            // Implementation of GetTimeSlotManagementViewModelAsync method
-            throw new NotImplementedException();
         }
     }
 } 
