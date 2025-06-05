@@ -1,4 +1,5 @@
 @model BookingSite.Models.ViewModels.BookingCalendarViewModel
+@inject BookingSite.Services.IDayMappingService DayMappingService
 
 <div class="card">
     <div class="card-body">
@@ -13,19 +14,8 @@
                         </div>
                         <div class="card-body">
                             @{
-                                var isOpenOnDay = room.OpenDays.Split(',').Select(int.Parse).Contains(
-                                    Model.SelectedDate.DayOfWeek switch
-                                    {
-                                        DayOfWeek.Sunday => 7,
-                                        DayOfWeek.Monday => 1,
-                                        DayOfWeek.Tuesday => 2,
-                                        DayOfWeek.Wednesday => 3,
-                                        DayOfWeek.Thursday => 4,
-                                        DayOfWeek.Friday => 5,
-                                        DayOfWeek.Saturday => 6,
-                                        _ => 0
-                                    }
-                                );
+                                var isOpenOnDay = room.OpenDays.Split(',').Select(int.Parse)
+                                    .Contains(DayMappingService.MapDayOfWeek(Model.SelectedDate.DayOfWeek));
                             }
                             @if (Model.RoomTimeSlots.TryGetValue(room.Id, out var timeSlots) && timeSlots.Any())
                             {

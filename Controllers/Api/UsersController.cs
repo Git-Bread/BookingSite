@@ -34,8 +34,8 @@ namespace BookingSite.Controllers.Api
                 userDtos.Add(new UserDto
                 {
                     Id = user.Id,
-                    Email = user.Email,
-                    UserName = user.UserName,
+                    Email = user.Email ?? string.Empty,
+                    UserName = user.UserName ?? string.Empty,
                     PhoneNumber = user.PhoneNumber,
                     EmailConfirmed = user.EmailConfirmed,
                     PhoneNumberConfirmed = user.PhoneNumberConfirmed,
@@ -61,8 +61,8 @@ namespace BookingSite.Controllers.Api
             return new UserDto
             {
                 Id = user.Id,
-                Email = user.Email,
-                UserName = user.UserName,
+                Email = user.Email ?? string.Empty,
+                UserName = user.UserName ?? string.Empty,
                 PhoneNumber = user.PhoneNumber,
                 EmailConfirmed = user.EmailConfirmed,
                 PhoneNumberConfirmed = user.PhoneNumberConfirmed,
@@ -84,7 +84,7 @@ namespace BookingSite.Controllers.Api
             {
                 UserName = createUserDto.Email,
                 Email = createUserDto.Email,
-                PhoneNumber = createUserDto.PhoneNumber,
+                PhoneNumber = createUserDto.PhoneNumber ?? string.Empty,
                 EmailConfirmed = createUserDto.EmailConfirmed,
                 PhoneNumberConfirmed = createUserDto.PhoneNumberConfirmed,
                 TwoFactorEnabled = createUserDto.TwoFactorEnabled
@@ -112,8 +112,8 @@ namespace BookingSite.Controllers.Api
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new UserDto
             {
                 Id = user.Id,
-                Email = user.Email,
-                UserName = user.UserName,
+                Email = user.Email ?? string.Empty,
+                UserName = user.UserName ?? string.Empty,
                 PhoneNumber = user.PhoneNumber,
                 EmailConfirmed = user.EmailConfirmed,
                 PhoneNumberConfirmed = user.PhoneNumberConfirmed,
@@ -139,7 +139,7 @@ namespace BookingSite.Controllers.Api
 
             user.Email = updateUserDto.Email;
             user.UserName = updateUserDto.Email;
-            user.PhoneNumber = updateUserDto.PhoneNumber;
+            user.PhoneNumber = updateUserDto.PhoneNumber ?? string.Empty;
             user.EmailConfirmed = updateUserDto.EmailConfirmed;
             user.PhoneNumberConfirmed = updateUserDto.PhoneNumberConfirmed;
             user.TwoFactorEnabled = updateUserDto.TwoFactorEnabled;
@@ -166,7 +166,7 @@ namespace BookingSite.Controllers.Api
             {
                 var currentRoles = await _userManager.GetRolesAsync(user);
                 await _userManager.RemoveFromRolesAsync(user, currentRoles);
-                await _userManager.AddToRolesAsync(user, updateUserDto.Roles);
+                await _userManager.AddToRolesAsync(user, updateUserDto.Roles.Where(r => r != null).ToList());
             }
 
             return NoContent();
@@ -195,7 +195,10 @@ namespace BookingSite.Controllers.Api
         [HttpGet("roles")]
         public async Task<ActionResult<IEnumerable<string>>> GetRoles()
         {
-            return await _roleManager.Roles.Select(r => r.Name).ToListAsync();
+            return await _roleManager.Roles
+                .Select(r => r.Name ?? string.Empty)
+                .Where(name => !string.IsNullOrEmpty(name))
+                .ToListAsync();
         }
 
         // POST: api/Users/roles
@@ -243,44 +246,41 @@ namespace BookingSite.Controllers.Api
 
     public class UserDto
     {
-        public string Id { get; set; }
-        public string Email { get; set; }
-        public string UserName { get; set; }
-        public string PhoneNumber { get; set; }
+        public required string Id { get; set; }
+        public required string Email { get; set; }
+        public required string UserName { get; set; }
+        public string? PhoneNumber { get; set; }
         public bool EmailConfirmed { get; set; }
         public bool PhoneNumberConfirmed { get; set; }
         public bool TwoFactorEnabled { get; set; }
-        public List<string> Roles { get; set; }
+        public required List<string> Roles { get; set; }
     }
 
     public class CreateUserDto
     {
         [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         [Required]
-        [MinLength(6)]
-        public string Password { get; set; }
+        public required string Password { get; set; }
 
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
         public bool EmailConfirmed { get; set; }
         public bool PhoneNumberConfirmed { get; set; }
         public bool TwoFactorEnabled { get; set; }
-        public List<string> Roles { get; set; }
+        public List<string>? Roles { get; set; }
     }
 
     public class UpdateUserDto
     {
         [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
-        public string NewPassword { get; set; }
-        public string PhoneNumber { get; set; }
+        public string? NewPassword { get; set; }
+        public string? PhoneNumber { get; set; }
         public bool EmailConfirmed { get; set; }
         public bool PhoneNumberConfirmed { get; set; }
         public bool TwoFactorEnabled { get; set; }
-        public List<string> Roles { get; set; }
+        public List<string>? Roles { get; set; }
     }
 } 

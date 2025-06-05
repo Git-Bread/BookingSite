@@ -13,8 +13,9 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
                 <div class="w-100">
                     <!-- Top row with brand and auth buttons -->
@@ -23,9 +24,9 @@
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <div class="d-flex align-items-center gap-3">
-                                <span class="navbar-text"><i class="fas fa-user me-1"></i>@User.Identity.Name</span>
+                                <span class="navbar-text"><i class="fas fa-user me-1" aria-hidden="true"></i>@User.Identity.Name</span>
                                 <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-dark"><i class="fas fa-sign-out-alt me-1"></i>Logout</button>
+                                    <button type="submit" class="btn btn-outline-dark"><i class="fas fa-sign-out-alt me-1" aria-hidden="true"></i>Logout</button>
                                 </form>
                             </div>
                         }
@@ -33,17 +34,17 @@
                         {
                             <div class="d-flex gap-2">
                                 <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#loginModal">
-                                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                                    <i class="fas fa-sign-in-alt me-1" aria-hidden="true"></i>Login
                                 </button>
                                 <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#registerModal">
-                                    <i class="fas fa-user-plus me-1"></i>Register
+                                    <i class="fas fa-user-plus me-1" aria-hidden="true"></i>Register
                                 </button>
                             </div>
                         }
                     </div>
                     
                     <!-- Bottom row with navigation -->
-                    <button class="navbar-toggler w-100 d-sm-none mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <button class="navbar-toggler w-100 d-sm-none mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     <div class="navbar-collapse collapse" id="navbarNav">
@@ -54,14 +55,14 @@
                                     <a class="nav-link text-dark @(ViewContext.RouteData.Values["Action"]?.ToString() == "Book" ? "active" : "")" 
                                        asp-controller="Booking" 
                                        asp-action="Book">
-                                        <i class="fas fa-calendar-plus me-1"></i>Book Room
+                                        <i class="fas fa-calendar-plus me-1" aria-hidden="true"></i>Book Room
                                     </a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link text-dark @(ViewContext.RouteData.Values["Action"]?.ToString() == "MyBookings" ? "active" : "")" 
                                        asp-controller="Booking" 
                                        asp-action="MyBookings">
-                                        <i class="fas fa-calendar-check me-1"></i>My Bookings
+                                        <i class="fas fa-calendar-check me-1" aria-hidden="true"></i>My Bookings
                                     </a>
                                 </li>
                                 @if (User.IsInRole("Admin"))
@@ -70,7 +71,7 @@
                                         <a class="nav-link text-dark @(ViewContext.RouteData.Values["Action"]?.ToString() == "Dashboard" ? "active" : "")" 
                                            asp-controller="Admin" 
                                            asp-action="Dashboard">
-                                            <i class="fas fa-gauge-high me-1"></i>Admin Dashboard
+                                            <i class="fas fa-gauge-high me-1" aria-hidden="true"></i>Admin Dashboard
                                         </a>
                                     </li>
                                 }
@@ -83,14 +84,14 @@
     </header>
 
     <div class="container">
-        <main class="pb-3">
+        <main id="main-content" class="pb-3" role="main">
             @if (TempData["Error"] != null)
             {
-                <div class="alert alert-danger">@TempData["Error"]</div>
+                <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
             }
             @if (TempData["Success"] != null)
             {
-                <div class="alert alert-success">@TempData["Success"]</div>
+                <div class="alert alert-success" role="alert">@TempData["Success"]</div>
             }
             @RenderBody()
         </main>
@@ -103,36 +104,38 @@
     </footer>
 
     <!-- Login Modal -->
-    <div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title"><i class="fas fa-sign-in-alt me-2"></i>Login</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="loginModalLabel"><i class="fas fa-sign-in-alt me-2" aria-hidden="true"></i>Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-danger d-none" id="loginError"></div>
+                    <div class="alert alert-danger d-none" id="loginError" role="alert"></div>
                     <form asp-controller="Auth" asp-action="Login" method="post" id="loginForm" onsubmit="return handleFormSubmit(this, 'loginError')">
                         @Html.AntiForgeryToken()
                         <div class="mb-3">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <span class="input-group-text"><i class="fas fa-envelope" aria-hidden="true"></i></span>
                                 <input type="email" name="Email" class="form-control" placeholder="Email" 
                                     required 
-                                    title="Please enter a valid email address">
+                                    title="Please enter a valid email address"
+                                    aria-label="Email address">
                             </div>
                         </div>
                         <div class="mb-3">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <span class="input-group-text"><i class="fas fa-lock" aria-hidden="true"></i></span>
                                 <input type="password" name="Password" class="form-control" placeholder="Password" 
                                     required 
-                                    minlength="6">
+                                    minlength="6"
+                                    aria-label="Password">
                             </div>
                         </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-dark">
-                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                                <i class="fas fa-sign-in-alt me-1" aria-hidden="true"></i>Login
                             </button>
                         </div>
                     </form>

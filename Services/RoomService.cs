@@ -1,16 +1,19 @@
 using BookingSite.Models;
 using BookingSite.Data;
 using Microsoft.EntityFrameworkCore;
+using BookingSite.Models.ViewModels;
 
 namespace BookingSite.Services
 {
     public class RoomService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDayMappingService _dayMappingService;
 
-        public RoomService(ApplicationDbContext context)
+        public RoomService(ApplicationDbContext context, IDayMappingService dayMappingService)
         {
             _context = context;
+            _dayMappingService = dayMappingService;
         }
 
         public async Task<List<Room>> GetAllRoomsWithTimeSlotsAsync()
@@ -92,7 +95,7 @@ namespace BookingSite.Services
             return true;
         }
 
-        public async Task<bool> IsRoomAvailableAsync(int roomId, DateTime date, int timeSlotId)
+        public async Task<bool> IsTimeSlotAvailableAsync(int roomId, int timeSlotId, DateTime date)
         {
             var room = await _context.Rooms
                 .Include(r => r.TimeSlots)
@@ -102,7 +105,7 @@ namespace BookingSite.Services
                 return false;
 
             // Check if the room is open on this day
-            var dayOfWeek = MapDayOfWeek(date.DayOfWeek);
+            var dayOfWeek = _dayMappingService.MapDayOfWeek(date.DayOfWeek);
             if (!room.OpenDays.Split(',').Select(int.Parse).Contains(dayOfWeek))
                 return false;
 
@@ -137,7 +140,7 @@ namespace BookingSite.Services
             if (timeSlot == null || !timeSlot.IsEnabled) return false;
 
             // Check if the room is open on this day
-            var dayOfWeek = MapDayOfWeek(date.DayOfWeek);
+            var dayOfWeek = _dayMappingService.MapDayOfWeek(date.DayOfWeek);
             if (!room.OpenDays.Split(',').Select(int.Parse).Contains(dayOfWeek))
                 return false;
 
@@ -192,34 +195,10 @@ namespace BookingSite.Services
                 .ToListAsync();
         }
 
-        private int MapDayOfWeek(DayOfWeek dayOfWeek)
+        public async Task<TimeSlotManagementViewModel> GetTimeSlotManagementViewModelAsync(int roomId)
         {
-            return dayOfWeek switch
-            {
-                DayOfWeek.Sunday => 7,
-                DayOfWeek.Monday => 1,
-                DayOfWeek.Tuesday => 2,
-                DayOfWeek.Wednesday => 3,
-                DayOfWeek.Thursday => 4,
-                DayOfWeek.Friday => 5,
-                DayOfWeek.Saturday => 6,
-                _ => throw new ArgumentException($"Unexpected day of week: {dayOfWeek}")
-            };
-        }
-
-        private string GetDayName(int dayNumber)
-        {
-            return dayNumber switch
-            {
-                1 => "Monday",
-                2 => "Tuesday",
-                3 => "Wednesday",
-                4 => "Thursday",
-                5 => "Friday",
-                6 => "Saturday",
-                7 => "Sunday",
-                _ => throw new ArgumentException($"Invalid day number: {dayNumber}")
-            };
+            // Implementation of GetTimeSlotManagementViewModelAsync method
+            throw new NotImplementedException();
         }
     }
 } 

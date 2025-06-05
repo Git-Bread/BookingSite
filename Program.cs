@@ -45,6 +45,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
 
 // Add RoomService to the service collection
 builder.Services.AddScoped<RoomService>();
+builder.Services.AddScoped<IDayMappingService, DayMappingService>();
 
 // Add the booking cleanup service
 builder.Services.AddHostedService<BookingCleanupService>();

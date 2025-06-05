@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using BookingSite.Models;
 using BookingSite.Models.ViewModels;
 using BookingSite.Data;
+using BookingSite.Services;
 
 namespace BookingSite.Controllers
 {
@@ -14,31 +15,18 @@ namespace BookingSite.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<BookingController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IDayMappingService _dayMappingService;
 
         public BookingController(
             ApplicationDbContext context, 
             ILogger<BookingController> logger,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IDayMappingService dayMappingService)
         {
             _context = context;
             _logger = logger;
             _userManager = userManager;
-        }
-
-        private int MapDayOfWeek(DayOfWeek dayOfWeek)
-        {
-            // Map C# DayOfWeek to OpenDays format
-            return dayOfWeek switch
-            {
-                DayOfWeek.Sunday => 1,   
-                DayOfWeek.Monday => 2,    
-                DayOfWeek.Tuesday => 3,   
-                DayOfWeek.Wednesday => 4,
-                DayOfWeek.Thursday => 5, 
-                DayOfWeek.Friday => 6,   
-                DayOfWeek.Saturday => 7,  
-                _ => throw new ArgumentException("Invalid day of week")
-            };
+            _dayMappingService = dayMappingService;
         }
 
         public async Task<IActionResult> Book(DateTime? date)
@@ -53,7 +41,7 @@ namespace BookingSite.Controllers
             var roomTimeSlots = new Dictionary<int, List<TimeSlot>>();
             foreach (var room in rooms)
             {
-                var mappedDay = MapDayOfWeek(selectedDate.DayOfWeek);
+                var mappedDay = _dayMappingService.MapDayOfWeek(selectedDate.DayOfWeek);
                 var openDays = room.OpenDays.Split(',').Select(int.Parse).ToList();
                 
                 _logger.LogInformation($"Room {room.Name}: Selected Date: {selectedDate.DayOfWeek}, Mapped Day: {mappedDay}, OpenDays: {string.Join(",", openDays)}");
@@ -129,7 +117,7 @@ namespace BookingSite.Controllers
                 return BadRequest("Room not found.");
             }
 
-            var mappedDay = MapDayOfWeek(model.Date.DayOfWeek);
+            var mappedDay = _dayMappingService.MapDayOfWeek(model.Date.DayOfWeek);
             var openDays = room.OpenDays.Split(',').Select(int.Parse).ToList();
             
             _logger.LogInformation($"Booking attempt - Room {room.Name}: Selected Date: {model.Date.DayOfWeek}, Mapped Day: {mappedDay}, OpenDays: {string.Join(",", openDays)}");
